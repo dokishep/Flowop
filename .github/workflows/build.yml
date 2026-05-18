@@ -17,18 +17,29 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y nasm
+          sudo apt-get install -y nasm mtools
 
-      - name: Build
-        run: make all
+      - name: Build Base OS
+        run: |
+          make all
+          cp out/flowop.img out/flowop_base.img
+
+      - name: Build Demo OS
+        run: |
+          make app
+          ./copyToIMG.sh
+          mv out/flowop.img out/flowop_demo.img
+          mv out/flowop_base.img out/flowop.img
 
       - name: Generate Release Tag
         id: tag
         run: echo "TAG_NAME=FLOWOP_$(date +'%Y%m%d_%H%M')" >> $GITHUB_ENV
 
-      - name: Create Release and Upload Artifact
+      - name: Create Release and Upload Artifacts
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ env.TAG_NAME }}
           name: ${{ env.TAG_NAME }}
-          files: out/flowop.img
+          files: |
+            out/flowop.img
+            out/flowop_demo.img

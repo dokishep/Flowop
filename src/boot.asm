@@ -5,43 +5,39 @@ KERNEL_SEG equ 0x1000
 CMD_SEG    equ 0x2000
 
 start:
-    ; Save the boot drive number provided by BIOS in DL
     mov [BOOT_DRIVE], dl
-
-    ; Set up clean segment registers and stack pointer
     xor ax, ax
     mov ds, ax
     mov es, ax
     mov ss, ax
     mov sp, 0x7c00
 
-    ; Load Kernel: 2 sectors starting from Sector 2
+    ; Load Kernel: 4 sectors starting from Sector 2 (LBA 1)
     mov ax, KERNEL_SEG
     mov es, ax
-    xor bx, bx          ; Destination ES:BX = 0x1000:0000
-    mov ah, 0x02        ; BIOS Read Sectors function
-    mov al, 2           ; Number of sectors to read
-    mov ch, 0           ; Cylinder 0
-    mov dh, 0           ; Head 0
-    mov cl, 2           ; Sector 2
+    xor bx, bx          
+    mov ah, 0x02        
+    mov al, 4           ; Increased to 4 sectors
+    mov ch, 0           
+    mov dh, 0           
+    mov cl, 2           
     mov dl, [BOOT_DRIVE]
     int 0x13
-    jc disk_error       ; Jump if carry flag set (error)
+    jc disk_error       
 
-    ; Load Command Binary: 1 sector starting from Sector 4
+    ; Load Command Binary: 4 sectors starting from Sector 6 (LBA 5)
     mov ax, CMD_SEG
     mov es, ax
-    xor bx, bx          ; Destination ES:BX = 0x2000:0000
-    mov ah, 0x02        ; BIOS Read Sectors function
-    mov al, 1           ; Number of sectors to read
-    mov ch, 0           ; Cylinder 0
-    mov dh, 0           ; Head 0
-    mov cl, 4           ; Sector 4
+    xor bx, bx          
+    mov ah, 0x02        
+    mov al, 4           ; Increased to 4 sectors
+    mov ch, 0           
+    mov dh, 0           
+    mov cl, 6           ; Moved up to Sector 6
     mov dl, [BOOT_DRIVE]
     int 0x13
     jc disk_error
 
-    ; Jump directly to the loaded kernel
     jmp KERNEL_SEG:0000
 
 disk_error:

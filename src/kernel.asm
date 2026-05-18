@@ -2,21 +2,17 @@
 bits 16
 
 kernel_start:
-    ; Synchronize data segments with code segment (0x1000)
     mov ax, cs
     mov ds, ax
     mov es, ax
     
-    ; Print status
     mov si, KERNEL_MSG
     call kernel_print
 
-    ; Initialize custom system calls interface
     call setup_syscalls
     mov si, SYSCALL_MSG
     call kernel_print
 
-    ; Prepare data segments for user land environment execution
     mov si, RUNNING_CMD_MSG
     call kernel_print
 
@@ -24,7 +20,6 @@ kernel_start:
     mov ds, ax
     mov es, ax
     
-    ; Jump to the command binary loaded at 0x2000:0000
     jmp 0x2000:0000
 
 kernel_print:
@@ -38,7 +33,6 @@ kernel_print:
     ret
 
 kernel_end:
-    ; The program safely returns here via Syscall 1 (sys_exit)
     mov ax, 0x1000
     mov ds, ax
     mov es, ax
@@ -50,13 +44,12 @@ kernel_halt:
     hlt
     jmp kernel_halt
 
-KERNEL_MSG      db "Welcome to flowop Kernel!", 13, 10, 0
-SYSCALL_MSG     db "Syscalls initialized safely (Int 0x30)...", 13, 10, 0
-RUNNING_CMD_MSG db "Launching auto-run user binary application...", 13, 10, 0
-EXIT_MSG        db "Command exited. Kernel regained control. Halting.", 13, 10, 0
+KERNEL_MSG      db "flowop Kernel Loaded.", 13, 10, 0
+SYSCALL_MSG     db "Syscalls expanded (Modes, Draw, I/O).", 13, 10, 0
+RUNNING_CMD_MSG db "Transferring to BASIC Shell...", 13, 10, 0
+EXIT_MSG        db "Shell Terminated. Kernel Halting.", 13, 10, 0
 
-; Merges the system calls code completely inside the kernel binary
 %include "syscalls.asm"
 
-; Pad out the binary to exactly 2 full sectors (1024 bytes)
-times 1024-($-$$) db 0
+; Pad to exactly 4 sectors (2048 bytes)
+times 2048-($-$$) db 0

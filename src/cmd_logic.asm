@@ -101,25 +101,112 @@ cmd_pixel:
     call parse_next_arg
     jc .error
     call arg_to_int
-    push ax             ; Save X coordinate
+    push ax             ; [esp+4] Save X coordinate
 
     call parse_next_arg
     jc .error_pop1
     call arg_to_int
-    push ax             ; Save Y coordinate
+    push ax             ; [esp+2] Save Y coordinate
 
     call parse_next_arg
     jc .error_pop2
     call arg_to_int     ; AX now holds Color index
     
-    pop dx              ; DX = Y
-    pop cx              ; CX = X
+    mov dx, [esp+2]     ; DX = Y
+    mov cx, [esp+4]     ; CX = X
     mov ah, 3           ; Syscall 3: Draw Pixel
     int 0x30
+
+.finish:
+    add sp, 4           ; Clean X and Y off the stack safely
     ret
+
 .error_pop2: pop ax
 .error_pop1: pop ax
 .error:
+    mov ah, 0
+    mov si, ERR_ARGS
+    int 0x30
+    ret
+
+; Usage: LINE <X1> <Y1> <X2> <Y2> <COLOR>
+; Example: LINE 10 10 200 150 15
+cmd_line:
+    call parse_next_arg
+    jc .err
+    call arg_to_int
+    push ax             ; [esp+8] X1 Location
+    
+    call parse_next_arg
+    jc .err_p1
+    call arg_to_int
+    push ax             ; [esp+6] Y1 Location
+    
+    call parse_next_arg
+    jc .err_p2
+    call arg_to_int
+    push ax             ; [esp+4] X2 Location
+    
+    call parse_next_arg
+    jc .err_p3
+    call arg_to_int
+    push ax             ; [esp+2] Y2 Location
+    
+    call parse_next_arg
+    jc .err_p4
+    call arg_to_int
+    push ax             ; [esp]   Color Index
+
+    mov cx, [esp+8]     ; CX = Working X coordinate (Starts at X1)
+    mov dx, [esp+6]     ; DX = Working Y coordinate (Starts at Y1)
+    mov bx, [esp]       ; BX = Color (BL)
+
+.line_loop:
+    mov ax, bx          ; AL = Color
+    mov ah, 3           ; Syscall 3: Draw Pixel
+    int 0x30
+
+    cmp cx, [esp+4]     ; Check if we reached X2 target destination
+    je .done_step_x
+    jl .inc_x
+    dec cx              ; Move X left if X1 > X2
+    jmp .step_y
+.inc_x:
+    inc cx              ; Move X right if X1 < X2
+
+.step_y:
+    cmp dx, [esp+2]     ; Linear interpolation check for Y coordinate step
+    je .line_loop
+    jl .inc_y
+    dec dx              ; Move Y up if Y1 > Y2
+    jmp .line_loop
+.inc_y:
+    inc dx              ; Move Y down if Y1 < Y2
+    jmp .line_loop
+
+.done_step_x:
+    cmp dx, [esp+2]     ; If X reached destination, check if Y still has steps left
+    je .finish
+    jl .inc_y_only
+    dec dx
+    jmp .draw_last_vertical
+.inc_y_only:
+    inc dx
+.draw_last_vertical:
+    mov ax, bx
+    mov ah, 3
+    int 0x30
+    jmp .done_step_x
+
+.finish:
+    add sp, 10          ; Clean all 5 arguments off the stack safely
+    ret
+
+.err_p4: pop ax
+.err_p3: pop ax
+.err_p2: pop ax
+.err_p1: pop ax
+.err:
     mov ah, 0
     mov si, ERR_ARGS
     int 0x30
@@ -131,51 +218,51 @@ cmd_rect:
     call parse_next_arg
     jc .err
     call arg_to_int
-    push ax         ; [sp+8] X Start
+    push ax             ; [esp+8] X Start
     
     call parse_next_arg
     jc .err_p1
     call arg_to_int
-    push ax         ; [sp+6] Y Start
+    push ax             ; [esp+6] Y Start
     
     call parse_next_arg
     jc .err_p2
     call arg_to_int
-    push ax         ; [sp+4] Width
+    push ax             ; [esp+4] Width
     
     call parse_next_arg
     jc .err_p3
     call arg_to_int
-    push ax         ; [sp+2] Height
+    push ax             ; [esp+2] Height
     
     call parse_next_arg
     jc .err_p4
     call arg_to_int
-    push ax         ; [sp] Color
+    push ax             ; [esp] Color
 
-    ; Variables setup for processing loop execution
-    pop bx              ; BX = Color
-    pop si              ; SI = Height counter
+    mov si, [esp+2]     ; SI = Height counter
 .row_loop:
     push si
-    mov bp, [esp+4]     ; BP = Width counter
-    mov cx, [esp+8]     ; CX = Current working X position
-    mov dx, [esp+6]     ; DX = Current working Y position
+    mov bp, [esp+6]     ; BP = Width counter (Offset shifted due to push si)
+    mov cx, [esp+10]    ; CX = Current working X position
+    mov dx, [esp+8]     ; DX = Current working Y position
 .col_loop:
-    mov ax, bx          ; AL = Color
+    mov ax, [esp+2]     ; AL = Color (Offset shifted due to push si)
     mov ah, 3           ; Syscall 3: Draw Pixel
     int 0x30
     inc cx              ; Next pixel column
     dec bp
     jnz .col_loop
     
-    inc word [esp+6]    ; Shift execution row tracking pointer down 1 pixel line
+    inc word [esp+8]    ; Shift execution row tracking pointer down 1 pixel line
     pop si
     dec si
     jnz .row_loop
 
-    add sp, 6           ; Clean leftover variables up off stack cleanly
+.finish:
+    add sp, 10          ; Clean all 5 arguments off the stack safely
     ret
+
 .err_p4: pop ax
 .err_p3: pop ax
 .err_p2: pop ax
@@ -204,7 +291,10 @@ cmd_exit:
     mov ah, 1           ; Syscall 1: Terminate to Kernel
     int 0x30
     ret
-    
+
+; =====================================================================
+; DATA STRINGS
+; =====================================================================
 NEWLINE_STR     db 13, 10, 0
 ERR_MISSING_ARG db "Error: Missing string argument.", 13, 10, 0
 ERR_ARGS        db "Syntax Error: Invalid parameter arguments.", 13, 10, 0
@@ -214,4 +304,5 @@ MSG_HELP        db "Commands:", 13, 10
                 db "  TEXT, GRAPHICS, HELP, WAIT, EXIT", 13, 10
                 db "  PRINT <text_string>", 13, 10
                 db "  PIXEL <x> <y> <color>", 13, 10
+                db "  LINE  <x1> <y1> <x2> <y2> <color>", 13, 10
                 db "  RECT  <x> <y> <w> <h> <color>", 13, 10, 0

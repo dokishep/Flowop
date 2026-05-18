@@ -10,6 +10,9 @@ cmd_map:
     
     db "PIXEL", 0
     dw cmd_pixel
+
+    db "LINE", 0
+    dw cmd_line
     
     db "RECT", 0
     dw cmd_rect

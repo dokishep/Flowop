@@ -307,4 +307,5 @@ MSG_HELP        db "Commands:", 13, 10
                 db "  PRINT <text_string>", 13, 10
                 db "  PIXEL <x> <y> <color>", 13, 10
                 db "  LINE  <x1> <y1> <x2> <y2> <color>", 13, 10
-                db "  RECT  <x> <y> <w> <h> <color>", 13, 10, 0
+                db "  RECT  <x> <y> <w> <h> <color>", 13, 10
+                db "  RUN   <filename.bas/bin>", 13, 10, 0

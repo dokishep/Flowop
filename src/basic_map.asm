@@ -26,4 +26,7 @@ cmd_map:
     db "EXIT", 0
     dw cmd_exit
     
+    db "RUN", 0
+    dw cmd_run
+    
     db 0 ; End of Table Map

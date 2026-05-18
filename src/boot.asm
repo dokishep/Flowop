@@ -5,6 +5,31 @@ KERNEL_SEG equ 0x1000
 CMD_SEG    equ 0x2000
 
 start:
+    jmp short boot_main
+    nop
+
+; FAT12 BIOS Parameter Block
+OEMLabel            db "FLOWOP  "
+BytesPerSector      dw 512
+SectorsPerCluster   db 1
+ReservedSectors     dw 9        ; 1 (boot) + 4 (kernel) + 4 (command)
+FATs                db 2
+RootDirEntries      dw 224
+LogicalSectors      dw 2880
+MediaType           db 0xF0
+SectorsPerFAT       dw 9
+SectorsPerTrack     dw 18
+Heads               dw 2
+HiddenSectors       dd 0
+LargeSectors        dd 0
+DriveNumber         db 0
+Reserved            db 0
+Signature           db 0x29
+VolumeID            dd 0x00000000
+VolumeLabel         db "FLOWOP OS  "
+FileSystem          db "FAT12   "
+
+boot_main:
     mov [BOOT_DRIVE], dl
     xor ax, ax
     mov ds, ax

@@ -22,7 +22,9 @@ $(BUILD_DIR)/command.bin: $(SRC_DIR)/command.asm $(SRC_DIR)/basic_map.asm $(SRC_
 
 $(OUT_DIR)/flowop.img: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/command.bin
 	@mkdir -p $(OUT_DIR)
+	@mkdir -p fat12
 	dd if=/dev/zero of=$(OUT_DIR)/flowop.img bs=512 count=2880 status=none
+	mkfs.fat -F 12 -R 9 $(OUT_DIR)/flowop.img
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUT_DIR)/flowop.img bs=512 count=1 conv=notrunc status=none
 	dd if=$(BUILD_DIR)/kernel.bin of=$(OUT_DIR)/flowop.img bs=512 seek=1 conv=notrunc status=none
 	dd if=$(BUILD_DIR)/command.bin of=$(OUT_DIR)/flowop.img bs=512 seek=5 conv=notrunc status=none

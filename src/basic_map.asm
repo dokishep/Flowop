@@ -29,4 +29,7 @@ cmd_map:
     db "RUN", 0
     dw cmd_run
     
+    db "CAT", 0
+    dw cmd_cat
+    
     db 0 ; End of Table Map

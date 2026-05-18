@@ -227,6 +227,144 @@ format_fat_name:
     popa
     ret
 
+cmd_cat:
+    call parse_next_arg
+    jc .no_arg
+    call format_fat_name
+
+    ; Load Root Directory to 0x3000:0000
+    mov ax, 0x3000
+    mov es, ax
+    mov bx, 0
+    mov ah, 0x02
+    mov al, 14          ; 14 sectors for root dir
+    mov ch, 0           ; Cylinder 0
+    mov dh, 1           ; Head 1 (Sector 27 is Cyl 0, Head 1, Sector 10)
+    mov cl, 10          ; Sector 10
+    mov dl, 0           ; Floppy 0
+    int 0x13
+    jc .disk_err
+
+    ; Search for file in Root Directory
+    mov cx, 224         ; 224 entries
+    mov di, 0           ; Offset in 0x3000
+.search_loop:
+    push cx
+    mov cx, 11
+    mov si, fat_filename
+    push di
+.compare_name:
+    mov al, [si]
+    mov ah, [es:di]
+    cmp al, ah
+    jne .not_match
+    inc si
+    inc di
+    loop .compare_name
+    ; Found it!
+    pop di
+    pop cx
+    jmp .found_file
+
+.not_match:
+    pop di
+    pop cx
+    add di, 32
+    loop .search_loop
+
+    ; Not found
+    mov ah, 0
+    mov si, ERR_FILE_NOT_FOUND
+    int 0x30
+    ret
+
+.found_file:
+    ; Get starting cluster at offset 26
+    mov ax, [es:di+26]
+    ; Get file size (low word) at offset 28
+    mov cx, [es:di+28]
+    push cx             ; Save actual file size (bytes)
+    ; Calculate LBA: LBA = cluster - 2 + 41 = cluster + 39
+    add ax, 39
+    ; Convert LBA (AX) to CHS for INT 13h
+    push ax
+    push cx
+    xor dx, dx
+    mov bx, 18
+    div bx              ; AX = Track, DX = Sector - 1
+    inc dl              ; DL = Sector
+    mov cl, dl          ; CL = Sector
+    xor dx, dx
+    mov bx, 2
+    div bx              ; AX = Cylinder, DX = Head
+    mov ch, al          ; CH = Cylinder
+    mov dh, dl          ; DH = Head
+    mov dl, 0           ; Drive = 0
+    pop ax              ; Restore file size into AX
+    ; How many sectors? (Size + 511) / 512
+    add ax, 511
+    shr ax, 9
+    cmp ax, 0
+    jne .do_read
+    mov ax, 1           ; At least 1 sector
+.do_read:
+    mov al, al          ; AL = sectors to read
+    
+    ; Read to 0x4000:0000
+    mov bx, 0x4000
+    mov es, bx
+    mov bx, 0
+    mov ah, 0x02
+    int 0x13
+    pop bx              ; Stack fix from LBA push
+    jc .disk_err_pop_cx
+
+    ; Reset ES back to DS (0x2000)
+    mov ax, ds
+    mov es, ax
+
+    ; Print file contents
+    pop cx              ; CX = Actual file size
+    cmp cx, 0
+    je .done
+    
+    mov si, 0
+.print_loop:
+    push ds
+    mov ax, 0x4000
+    mov ds, ax
+    lodsb               ; AL = char from 0x4000:SI
+    pop ds
+    
+    cmp al, 0
+    je .skip_null
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
+.skip_null:
+    loop .print_loop
+
+.done:
+    ; Print newline
+    mov ah, 0
+    mov si, NEWLINE_STR
+    int 0x30
+    ret
+
+.no_arg:
+    mov ah, 0
+    mov si, ERR_MISSING_ARG
+    int 0x30
+    ret
+
+.disk_err_pop_cx:
+    pop cx
+.disk_err:
+    mov ah, 0
+    mov si, ERR_DISK
+    int 0x30
+    ret
+
 ; Variables and strings for FAT12
 fat_filename       db "           "
 script_ptr         dw 0

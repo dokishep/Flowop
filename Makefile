@@ -15,22 +15,16 @@ $(BUILD_DIR)/kernel.bin: $(SRC_DIR)/kernel.asm $(SRC_DIR)/syscalls.asm
 	@mkdir -p $(BUILD_DIR)
 	$(ASM) -f bin -I$(SRC_DIR)/ $(SRC_DIR)/kernel.asm -o $(BUILD_DIR)/kernel.bin
 
-# Command bin now relies on basic_map.asm and requires the -I flag
-$(BUILD_DIR)/command.bin: $(SRC_DIR)/command.asm $(SRC_DIR)/basic_map.asm
+# Track cmd_logic.asm as an intermediate compile safety dependency
+$(BUILD_DIR)/command.bin: $(SRC_DIR)/command.asm $(SRC_DIR)/basic_map.asm $(SRC_DIR)/cmd_logic.asm
 	@mkdir -p $(BUILD_DIR)
 	$(ASM) -f bin -I$(SRC_DIR)/ $(SRC_DIR)/command.asm -o $(BUILD_DIR)/command.bin
 
 $(OUT_DIR)/flowop.img: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin $(BUILD_DIR)/command.bin
 	@mkdir -p $(OUT_DIR)
 	dd if=/dev/zero of=$(OUT_DIR)/flowop.img bs=512 count=2880 status=none
-	
-	# Sector 1 (seek=0) - Bootloader (1 Sector)
 	dd if=$(BUILD_DIR)/boot.bin of=$(OUT_DIR)/flowop.img bs=512 count=1 conv=notrunc status=none
-	
-	# Sector 2 (seek=1) - Kernel (Now 4 Sectors)
 	dd if=$(BUILD_DIR)/kernel.bin of=$(OUT_DIR)/flowop.img bs=512 seek=1 conv=notrunc status=none
-	
-	# Sector 6 (seek=5) - Command/BASIC (Now 4 Sectors)
 	dd if=$(BUILD_DIR)/command.bin of=$(OUT_DIR)/flowop.img bs=512 seek=5 conv=notrunc status=none
 
 run: $(OUT_DIR)/flowop.img

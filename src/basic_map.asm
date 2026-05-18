@@ -1,4 +1,3 @@
-; Map structure: [String], Null-Terminator, [Function Pointer Word]
 cmd_map:
     db "GRAPHICS", 0
     dw cmd_graphics
@@ -6,8 +5,14 @@ cmd_map:
     db "TEXT", 0
     dw cmd_text
     
-    db "DRAW", 0
-    dw cmd_draw
+    db "PRINT", 0
+    dw cmd_print
+    
+    db "PIXEL", 0
+    dw cmd_pixel
+    
+    db "RECT", 0
+    dw cmd_rect
     
     db "WAIT", 0
     dw cmd_wait
@@ -18,4 +23,4 @@ cmd_map:
     db "EXIT", 0
     dw cmd_exit
     
-    db 0 ; Table Terminator
+    db 0 ; End of Table Map

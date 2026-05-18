@@ -44,7 +44,7 @@ kernel_halt:
     hlt
     jmp kernel_halt
 
-KERNEL_MSG      db "flowop Kernel Loaded.", 13, 10, 0
+KERNEL_MSG      db "Flowop Kernel Loaded.", 13, 10, 0
 SYSCALL_MSG     db "Syscalls expanded (Modes, Draw, I/O).", 13, 10, 0
 RUNNING_CMD_MSG db "Transferring to BASIC Shell...", 13, 10, 0
 EXIT_MSG        db "Shell Terminated. Kernel Halting.", 13, 10, 0

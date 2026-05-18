@@ -32,4 +32,7 @@ cmd_map:
     db "CAT", 0
     dw cmd_cat
     
+    db "DIR", 0
+    dw cmd_dir
+    
     db 0 ; End of Table Map

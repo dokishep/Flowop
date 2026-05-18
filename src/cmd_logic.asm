@@ -309,4 +309,5 @@ MSG_HELP        db "Commands:", 13, 10
                 db "  LINE  <x1> <y1> <x2> <y2> <color>", 13, 10
                 db "  RECT  <x> <y> <w> <h> <color>", 13, 10
                 db "  RUN   <filename.bas/bin>", 13, 10
-                db "  CAT   <filename>", 13, 10, 0
+                db "  CAT   <filename>", 13, 10
+                db "  DIR", 13, 10, 0

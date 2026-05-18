@@ -365,6 +365,72 @@ cmd_cat:
     int 0x30
     ret
 
+cmd_dir:
+    ; Load Root Directory to 0x3000:0000
+    mov ax, 0x3000
+    mov es, ax
+    mov bx, 0
+    mov ah, 0x02
+    mov al, 14          ; 14 sectors for root dir
+    mov ch, 0           ; Cylinder 0
+    mov dh, 1           ; Head 1 (Sector 27 is Cyl 0, Head 1, Sector 10)
+    mov cl, 10          ; Sector 10
+    mov dl, 0           ; Floppy 0
+    int 0x13
+    jc .disk_err_dir
+
+    mov cx, 224         ; 224 entries
+    mov di, 0           ; Offset in 0x3000
+
+.dir_loop:
+    mov al, [es:di]
+    cmp al, 0x00        ; End of directory
+    je .dir_done
+    cmp al, 0xE5        ; Deleted file
+    je .skip_entry
+    
+    ; Check attribute byte at offset 11
+    mov al, [es:di+11]
+    cmp al, 0x0F        ; LFN entry
+    je .skip_entry
+    test al, 0x08       ; Volume label
+    jnz .skip_entry
+    
+    ; Print filename (11 chars)
+    push cx
+    mov cx, 11
+    mov si, di
+.print_name:
+    mov al, [es:si]
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
+    inc si
+    loop .print_name
+    pop cx
+    
+    ; Print newline
+    mov ah, 0
+    mov si, NEWLINE_STR
+    int 0x30
+
+.skip_entry:
+    add di, 32
+    loop .dir_loop
+
+.dir_done:
+    mov ax, ds
+    mov es, ax
+    ret
+
+.disk_err_dir:
+    mov ax, ds
+    mov es, ax
+    mov ah, 0
+    mov si, ERR_DISK
+    int 0x30
+    ret
+
 ; Variables and strings for FAT12
 fat_filename       db "           "
 script_ptr         dw 0

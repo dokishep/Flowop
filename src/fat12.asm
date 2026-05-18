@@ -48,6 +48,8 @@ cmd_run:
     loop .search_loop
 
     ; Not found
+    mov ax, ds
+    mov es, ax
     mov ah, 0
     mov si, ERR_FILE_NOT_FOUND
     int 0x30
@@ -110,6 +112,8 @@ cmd_run:
     cmp al, 'I'
     je .run_bin
 .unknown_ext:
+    mov ax, ds
+    mov es, ax
     mov ah, 0
     mov si, ERR_INVALID_EXT
     int 0x30
@@ -169,6 +173,8 @@ cmd_run:
     int 0x30
     ret
 .disk_err:
+    mov ax, ds
+    mov es, ax
     mov ah, 0
     mov si, ERR_DISK
     int 0x30
@@ -273,6 +279,8 @@ cmd_cat:
     loop .search_loop
 
     ; Not found
+    mov ax, ds
+    mov es, ax
     mov ah, 0
     mov si, ERR_FILE_NOT_FOUND
     int 0x30
@@ -360,6 +368,8 @@ cmd_cat:
 .disk_err_pop_cx:
     pop cx
 .disk_err:
+    mov ax, ds
+    mov es, ax
     mov ah, 0
     mov si, ERR_DISK
     int 0x30

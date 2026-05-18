@@ -4,6 +4,8 @@ QEMU=qemu-system-i386
 SRC_DIR=src
 BUILD_DIR=build
 OUT_DIR=out
+APPS_DIR=userApps
+FAT12_DIR=fat12
 
 all: $(OUT_DIR)/flowop.img
 
@@ -32,5 +34,10 @@ $(OUT_DIR)/flowop.img: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin $(BUILD_DIR
 run: $(OUT_DIR)/flowop.img
 	$(QEMU) -fda $(OUT_DIR)/flowop.img
 
+app:
+	@mkdir -p $(APPS_DIR)
+	@mkdir -p $(FAT12_DIR)
+	$(ASM) -f bin $(APPS_DIR)/guess.asm -o $(FAT12_DIR)/guess.bin
+
 clean:
-	rm -rf $(BUILD_DIR) $(OUT_DIR)
+	rm -rf $(BUILD_DIR) $(OUT_DIR) $(FAT12_DIR)/*.bin

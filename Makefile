@@ -38,6 +38,7 @@ app:
 	@mkdir -p $(APPS_DIR)
 	@mkdir -p $(FAT12_DIR)
 	$(ASM) -f bin $(APPS_DIR)/guess.asm -o $(FAT12_DIR)/guess.bin
+	$(ASM) -f bin $(APPS_DIR)/paint.asm -o $(FAT12_DIR)/paint.bin
 
 clean:
 	rm -rf $(BUILD_DIR) $(OUT_DIR) $(FAT12_DIR)/*.bin

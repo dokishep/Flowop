@@ -41,6 +41,7 @@ app:
 	$(ASM) -f bin $(APPS_DIR)/paint.asm -o $(FAT12_DIR)/paint.bin
 	$(ASM) -f bin $(APPS_DIR)/snake.asm -o $(FAT12_DIR)/snake.bin
 	$(ASM) -f bin $(APPS_DIR)/arabi.asm -o $(FAT12_DIR)/arabi.bin
+	$(ASM) -f bin $(APPS_DIR)/lgant.asm -o $(FAT12_DIR)/lgant.bin
 
 clean:
 	rm -rf $(BUILD_DIR) $(OUT_DIR) $(FAT12_DIR)/*.bin

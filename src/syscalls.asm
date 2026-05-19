@@ -30,6 +30,10 @@ syscall_handler:
     je .sys_sleep
     cmp ah, 9
     je .sys_clear_screen
+    cmp ah, 10
+    je .sys_play_tone
+    cmp ah, 11
+    je .sys_stop_sound
     iret
 
 .sys_print:

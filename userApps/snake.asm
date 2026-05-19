@@ -28,13 +28,10 @@ start:
 
 game_loop:
     ; Check for key press (non-blocking)
-    mov ah, 01h
-    int 16h
-    jz .no_key
-
-    ; Consume key
-    mov ah, 00h
-    int 16h
+    mov ah, 6
+    int 0x30
+    cmp al, 0
+    je .no_key
 
     cmp al, 'q'
     je end_game
@@ -188,16 +185,16 @@ game_loop:
     mov [snake_y + bx], ax
 .no_grow:
     ; Simplistic random apple position
-    mov ah, 00h
-    int 1Ah ; CX:DX = clock ticks
+    mov ah, 7
+    int 0x30 ; CX:DX = clock ticks
     mov ax, dx
     xor dx, dx
     mov cx, 40
     div cx
     mov [apple_x], dx
 
-    mov ah, 00h
-    int 1Ah
+    mov ah, 7
+    int 0x30
     mov ax, dx
     xor dx, dx
     mov cx, 25
@@ -224,8 +221,8 @@ game_loop:
     ; Delay
     mov cx, 0x0001
     mov dx, 0x86A0 ; ~100ms
-    mov ah, 86h
-    int 15h
+    mov ah, 8
+    int 0x30
 
     jmp game_loop
 

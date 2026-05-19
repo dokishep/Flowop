@@ -281,6 +281,24 @@ cmd_wait:
     int 0x30
     ret
 
+cmd_sleep:
+    call parse_next_arg
+    jc .err
+    call arg_to_int
+    ; AX holds the sleep duration in milliseconds
+    mov bx, 1000
+    mul bx              ; DX:AX = AX * 1000 (Microseconds)
+    mov cx, dx          ; High word of microseconds
+    mov dx, ax          ; Low word of microseconds
+    mov ah, 8           ; Syscall 8: Sleep
+    int 0x30
+    ret
+.err:
+    mov ah, 0
+    mov si, ERR_ARGS
+    int 0x30
+    ret
+
 cmd_help:
     mov ah, 0
     mov si, MSG_HELP
@@ -308,6 +326,7 @@ MSG_HELP        db "Commands:", 13, 10
                 db "  PIXEL <x> <y> <color>", 13, 10
                 db "  LINE  <x1> <y1> <x2> <y2> <color>", 13, 10
                 db "  RECT  <x> <y> <w> <h> <color>", 13, 10
+                db "  SLEEP <milliseconds>", 13, 10
                 db "  RUN   <filename.bas/bin>", 13, 10
                 db "  CAT   <filename>", 13, 10
                 db "  DIR", 13, 10, 0

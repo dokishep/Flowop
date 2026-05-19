@@ -35,4 +35,7 @@ cmd_map:
     db "DIR", 0
     dw cmd_dir
     
+    db "SLEEP", 0
+    dw cmd_sleep
+    
     db 0 ; End of Table Map

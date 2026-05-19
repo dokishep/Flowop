@@ -75,10 +75,8 @@ syscall_handler:
 
 .sys_read_key:
     ; Output AL = ascii character
-    push bx
     mov ah, 0x00
     int 0x16
-    pop bx
     iret
 
 .sys_read_string:
@@ -129,7 +127,6 @@ syscall_handler:
 
 .sys_read_key_async:
     ; Output AL = ascii character, or 0 if no key
-    push bx
     mov ah, 0x01
     int 0x16
     jz .no_key
@@ -139,7 +136,6 @@ syscall_handler:
 .no_key:
     mov al, 0
 .key_done:
-    pop bx
     iret
 
 .sys_get_time:
@@ -162,8 +158,8 @@ syscall_handler:
     ; Clears the screen in text mode (and sets cursor to 0,0)
     pusha
     mov ah, 0x06
-    mov al, 0x00 ; Scroll all lines
-    mov bh, 0x07 ; White on black attribute
+    mov al, 0x00   ; Scroll all lines
+    mov bh, 0x07   ; White on black attribute
     mov cx, 0x0000 ; Top left
     mov dx, 0x184F ; Bottom right (24, 79)
     int 0x10
@@ -177,24 +173,25 @@ syscall_handler:
     iret
 
 .sys_play_tone:
-    pusha
+    ; Input BX = Pit Divisor
+    push ax
 
-    ; Configure PIT channel 2
+    cli
+
     mov al, 0xB6
     out 0x43, al
 
-    ; Send divisor
-    mov ax, bx
-    out 0x42, al
+    mov ax, bx       ; Transfer input divisor cleanly into AX
+    out 0x42, al     ; LOW BYTE
     mov al, ah
-    out 0x42, al
+    out 0x42, al     ; HIGH BYTE
 
-    ; Enable speaker
     in al, 0x61
     or al, 00000011b
     out 0x61, al
 
-    popa
+    sti
+    pop ax
     iret
 
 .sys_stop_sound:

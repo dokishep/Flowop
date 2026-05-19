@@ -171,3 +171,34 @@ syscall_handler:
     int 0x10
     popa
     iret
+
+.sys_play_tone:
+    pusha
+
+    ; Configure PIT channel 2
+    mov al, 0xB6
+    out 0x43, al
+
+    ; Send divisor
+    mov ax, bx
+    out 0x42, al
+    mov al, ah
+    out 0x42, al
+
+    ; Enable speaker
+    in al, 0x61
+    or al, 00000011b
+    out 0x61, al
+
+    popa
+    iret
+
+.sys_stop_sound:
+    push ax
+
+    in al, 0x61
+    and al, 11111100b
+    out 0x61, al
+
+    pop ax
+    iret

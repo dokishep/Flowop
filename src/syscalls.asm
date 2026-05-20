@@ -34,6 +34,14 @@ syscall_handler:
     je .sys_play_tone
     cmp ah, 11
     je .sys_stop_sound
+    cmp ah, 12
+    je .sys_mouse_init
+    cmp ah, 13
+    je .sys_mouse_show
+    cmp ah, 14
+    je .sys_mouse_hide
+    cmp ah, 15
+    je .sys_mouse_get_pos
     iret
 
 .sys_print:
@@ -202,4 +210,165 @@ syscall_handler:
     out 0x61, al
 
     pop ax
+    iret
+
+.sys_mouse_init:
+    pusha
+    ; Enable auxiliary device (mouse)
+    call .ps2_wait
+    mov al, 0xA8
+    out 0x64, al
+
+    ; Enable IRQ 12 in PS/2 controller
+    call .ps2_wait
+    mov al, 0x20
+    out 0x64, al
+    call .ps2_wait_read
+    in al, 0x60
+    or al, 2
+    push ax
+    call .ps2_wait
+    mov al, 0x60
+    out 0x64, al
+    call .ps2_wait
+    pop ax
+    out 0x60, al
+
+    ; Set mouse default
+    call .ps2_wait
+    mov al, 0xD4
+    out 0x64, al
+    call .ps2_wait
+    mov al, 0xF6
+    out 0x60, al
+    call .ps2_wait_read
+    in al, 0x60
+
+    ; Enable data reporting
+    call .ps2_wait
+    mov al, 0xD4
+    out 0x64, al
+    call .ps2_wait
+    mov al, 0xF4
+    out 0x60, al
+    call .ps2_wait_read
+    in al, 0x60
+
+    ; Install IRQ 12 handler
+    cli
+    xor ax, ax
+    mov es, ax
+    mov word [es:0x01D0], mouse_irq_handler
+    mov word [es:0x01D2], cs
+    
+    ; Unmask IRQ 12
+    in al, 0xA1
+    and al, 0xEF
+    out 0xA1, al
+
+    ; Unmask IRQ 2
+    in al, 0x21
+    and al, 0xFB
+    out 0x21, al
+    sti
+
+    popa
+    mov ax, 0xFFFF ; return success
+    iret
+
+.ps2_wait:
+    in al, 0x64
+    test al, 2
+    jnz .ps2_wait
+    ret
+
+.ps2_wait_read:
+    in al, 0x64
+    test al, 1
+    jz .ps2_wait_read
+    ret
+
+.sys_mouse_show:
+    iret
+
+.sys_mouse_hide:
+    iret
+
+.sys_mouse_get_pos:
+    mov cx, [cs:mouse_x]
+    mov dx, [cs:mouse_y]
+    mov bx, [cs:mouse_btn]
+    iret
+
+mouse_cycle db 0
+mouse_byte db 0, 0, 0
+mouse_x dw 160
+mouse_y dw 100
+mouse_btn dw 0
+
+mouse_irq_handler:
+    pusha
+    
+    in al, 0x60
+    mov bl, al
+    
+    mov al, [cs:mouse_cycle]
+    cmp al, 0
+    je .byte0
+    cmp al, 1
+    je .byte1
+    cmp al, 2
+    je .byte2
+    jmp .done
+
+.byte0:
+    test bl, 0x08
+    jz .done ; Sync error, discard
+    mov [cs:mouse_byte], bl
+    inc byte [cs:mouse_cycle]
+    jmp .done
+.byte1:
+    mov [cs:mouse_byte+1], bl
+    inc byte [cs:mouse_cycle]
+    jmp .done
+.byte2:
+    mov [cs:mouse_byte+2], bl
+    mov byte [cs:mouse_cycle], 0
+    
+    ; Process
+    mov al, [cs:mouse_byte+1]
+    cbw
+    add [cs:mouse_x], ax
+    
+    cmp word [cs:mouse_x], 0
+    jge .x_min
+    mov word [cs:mouse_x], 0
+.x_min:
+    cmp word [cs:mouse_x], 639
+    jle .x_max
+    mov word [cs:mouse_x], 639
+.x_max:
+
+    mov al, [cs:mouse_byte+2]
+    cbw
+    sub [cs:mouse_y], ax
+    
+    cmp word [cs:mouse_y], 0
+    jge .y_min
+    mov word [cs:mouse_y], 0
+.y_min:
+    cmp word [cs:mouse_y], 199
+    jle .y_max
+    mov word [cs:mouse_y], 199
+.y_max:
+
+    mov bl, [cs:mouse_byte]
+    and bx, 7
+    mov [cs:mouse_btn], bx
+
+.done:
+    mov al, 0x20
+    out 0xA0, al
+    out 0x20, al
+    popa
     iret

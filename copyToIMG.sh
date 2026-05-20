@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mcopy -i out/flowop.img fat12/* ::/
+mcopy -o -i out/flowop.img fat12/* ::/

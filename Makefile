@@ -32,7 +32,7 @@ $(OUT_DIR)/flowop.img: $(BUILD_DIR)/boot.bin $(BUILD_DIR)/kernel.bin $(BUILD_DIR
 	dd if=$(BUILD_DIR)/command.bin of=$(OUT_DIR)/flowop.img bs=512 seek=5 conv=notrunc status=none
 
 run: $(OUT_DIR)/flowop.img
-	$(QEMU) -fda $(OUT_DIR)/flowop.img -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0
+	$(QEMU) -fda $(OUT_DIR)/flowop.img -audiodev pa,id=snd0 -machine pcspk-audiodev=snd0 -serial stdio
 
 app:
 	@mkdir -p $(APPS_DIR)
@@ -43,6 +43,7 @@ app:
 	$(ASM) -f bin $(APPS_DIR)/arabi.asm -o $(FAT12_DIR)/arabi.bin
 	$(ASM) -f bin $(APPS_DIR)/lgant.asm -o $(FAT12_DIR)/lgant.bin
 	$(ASM) -f bin $(APPS_DIR)/mouse.asm -o $(FAT12_DIR)/mouse.bin
+	$(ASM) -f bin $(APPS_DIR)/serial.asm -o $(FAT12_DIR)/serial.bin
 
 clean:
 	rm -rf $(BUILD_DIR) $(OUT_DIR) $(FAT12_DIR)/*.bin

@@ -37,9 +37,9 @@ syscall_handler:
     cmp ah, 12
     je .sys_mouse_init
     cmp ah, 13
-    je .sys_mouse_show
+    je .sys_serial_out
     cmp ah, 14
-    je .sys_mouse_hide
+    je .sys_serial_read
     cmp ah, 15
     je .sys_mouse_get_pos
     iret
@@ -288,10 +288,35 @@ syscall_handler:
     jz .ps2_wait_read
     ret
 
-.sys_mouse_show:
+.sys_serial_out:
+    ; Input AL = char to send
+    push dx
+    push ax
+.serial_out_wait:
+    mov dx, 0x3FD
+    in al, dx
+    test al, 0x20
+    jz .serial_out_wait
+    pop ax
+    mov dx, 0x3F8
+    out dx, al
+    pop dx
     iret
 
-.sys_mouse_hide:
+.sys_serial_read:
+    ; Output AL = char read, or 0 if none
+    push dx
+    mov dx, 0x3FD
+    in al, dx
+    test al, 0x01
+    jz .no_serial_data
+    mov dx, 0x3F8
+    in al, dx
+    jmp .serial_read_done
+.no_serial_data:
+    xor al, al
+.serial_read_done:
+    pop dx
     iret
 
 .sys_mouse_get_pos:

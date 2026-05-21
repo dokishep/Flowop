@@ -44,7 +44,7 @@ app:
 	$(ASM) -f bin $(APPS_DIR)/lgant.asm -o $(FAT12_DIR)/lgant.bin
 	$(ASM) -f bin $(APPS_DIR)/mouse.asm -o $(FAT12_DIR)/mouse.bin
 	$(ASM) -f bin $(APPS_DIR)/serial.asm -o $(FAT12_DIR)/serial.bin
-    $(ASM) -f bin $(APPS_DIR)/space.asm -o $(FAT12_DIR)/space.bin
+	$(ASM) -f bin $(APPS_DIR)/space.asm -o $(FAT12_DIR)/space.bin
 
 clean:
 	rm -rf $(BUILD_DIR) $(OUT_DIR) $(FAT12_DIR)/*.bin

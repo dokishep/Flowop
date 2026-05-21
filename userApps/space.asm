@@ -56,8 +56,12 @@ game_loop:
     jge .draw_aliens_done
     mov bx, cx
     shl bx, 1
-    cmp byte [alien_active + cx], 1
+    
+    ; Copy CX to SI (valid 16-bit index register)
+    mov si, cx
+    cmp byte [alien_active + si], 1
     jne .next_alien_draw
+    
     mov ax, [alien_x + bx]
     mov [temp_x], ax
     mov ax, [alien_y + bx]
@@ -103,8 +107,12 @@ game_loop:
     jge .erase_aliens_done
     mov bx, cx
     shl bx, 1
-    cmp byte [alien_active + cx], 1
+    
+    ; Copy CX to SI (valid 16-bit index register)
+    mov si, cx
+    cmp byte [alien_active + si], 1
     jne .next_alien_erase
+    
     mov ax, [alien_x + bx]
     mov [temp_x], ax
     mov ax, [alien_y + bx]
@@ -181,8 +189,12 @@ game_loop:
 .bullet_collision_loop:
     cmp cx, num_aliens
     jge .skip_bullet_update
-    cmp byte [alien_active + cx], 1
+    
+    ; Copy CX to SI (valid 16-bit index register)
+    mov si, cx
+    cmp byte [alien_active + si], 1
     jne .next_bullet_collision
+    
     mov bx, cx
     shl bx, 1
     
@@ -195,7 +207,7 @@ game_loop:
     jne .next_bullet_collision
 
     ; Collision Registered!
-    mov byte [alien_active + cx], 0
+    mov byte [alien_active + si], 0
     mov byte [bullet_active], 0
     inc word [score]
     
@@ -231,8 +243,12 @@ game_loop:
 .aliens_move_loop:
     cmp cx, num_aliens
     jge .aliens_move_done
-    cmp byte [alien_active + cx], 1
+    
+    ; Copy CX to SI (valid 16-bit index register)
+    mov si, cx
+    cmp byte [alien_active + si], 1
     jne .next_alien_move
+    
     mov bx, cx
     shl bx, 1
     inc word [alien_y + bx]
@@ -252,7 +268,10 @@ game_loop:
 .check_alive_loop:
     cmp cx, num_aliens
     jge .check_alive_done
-    or al, [alien_active + cx]
+    
+    ; Copy CX to SI (valid 16-bit index register)
+    mov si, cx
+    or al, [alien_active + si]
     inc cx
     jmp .check_alive_loop
 .check_alive_done:
@@ -377,7 +396,11 @@ reset_aliens:
 .r_loop:
     cmp cx, num_aliens
     jge .r_done
-    mov byte [alien_active + cx], 1
+    
+    ; Copy CX to SI (valid 16-bit index register)
+    mov si, cx
+    mov byte [alien_active + si], 1
+    
     mov bx, cx
     shl bx, 1
     mov word [alien_y + bx], 2
